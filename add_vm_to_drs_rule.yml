@@ -1,0 +1,26 @@
+---
+- name: Add VM to DRS VM Rule
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Get DRS VM Rule Info
+      community.vmware.vmware_vm_vm_drs_rule_info:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ cluster_name }}"
+        name: "{{ drs_vm_rule_name }}"
+      register: drs_rule_info
+
+    - name: Add VM to DRS VM Rule
+      community.vmware.vmware_vm_vm_drs_vm_rule:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ cluster_name }}"
+        name: "{{ drs_vm_rule_name }}"
+        enabled: "{{ drs_rule_info.drs_rule.enabled | default(True) }}"
+        affinity_rule: "{{ drs_rule_info.drs_rule.affinity_rule | default(False) }}"
+        vm_list: "{{ drs_rule_info.drs_rule.vm_list | default([]) + [vm_name] }}"
+      when: drs_vm_rule_name in drs_rule_info.drs_rule.name
